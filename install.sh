@@ -7,7 +7,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 #要求必要工具
-grep -E -i "ubuntu|debian" /etc/issue >/dev/null && apt-get install gcc g++ make wget unzip
+grep -E -i "ubuntu|debian" /etc/issue >/dev/null && apt-get -y install gcc g++ make wget unzip
 grep -i "centos" /etc/issue >/dev/null && yum -y install gcc gcc-c++ make wget unzip
 
 
