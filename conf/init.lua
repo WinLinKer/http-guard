@@ -3,7 +3,7 @@ http_guard = ngx.shared.http_guard; --声明一个字典
 ban_time = 600; --黑名单时间,单位:秒.
 cookie_enable = 0;--cookie标记开关,用来解决多用户共享ip上网误判的问题.0为关闭,1为开启.
 cookie_name = "httpguard"; --如果怀疑攻击者利用cookie跳过限制,可以修改此cookie_name进行防伪
-
+cookie_full_name = "cookie_"..cookie_name
 -----------静态资源变量设置--------------
 
 s_url_max = 50; --单个url 10秒内允许最大访问次数

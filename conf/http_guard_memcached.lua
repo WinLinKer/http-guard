@@ -1,4 +1,4 @@
-local cookie = ngx.var.cookie_httpguard or 100000000;
+local cookie = ngx.var[cookie_full_name] or 100000000;
 local ip = ngx.var.remote_addr;
 local uri = ngx.var.request_uri;
 local filename = ngx.var.request_filename;

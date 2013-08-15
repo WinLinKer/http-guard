@@ -1,5 +1,5 @@
 --获取cookie httpguard的值
-local cookie = ngx.var.cookie_httpguard;
+local cookie = ngx.var[cookie_full_name];
 
 --当httpguard的值不存在,且cookie_enable为1开启时,向客户端发送cookie
 if not cookie and cookie_enable == 1 then
