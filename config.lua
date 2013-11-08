@@ -10,6 +10,7 @@ dictName = "guard_dict",
 
 --可选值为single,multiple
 --如果有多台nginx在前端并列防攻击，需要设置guardMode的值为multiple，因为需要保持多台nginx生成的key可以在任意一台验证.
+--如果设置为multiple后，使用的key将是下面randomKey的值，所以建议做一个定时任务，通过管理接口定时修改randomKey的值
 guardMode = "single",
 
 --设置用于生成随机cookie或者随机js跳转代码的key
