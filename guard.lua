@@ -430,7 +430,7 @@ function Guard:verifyCookie()
 end
 
 --获取用户识别码
-function Guard:getUserIdentify(realClientIP)
+function Guard:getUserIdentify()
 	if self.config.clientIdentify == "cookie" then	
 		self:debug("clientIdentify is cookie.")
 		--获取cookie的值
