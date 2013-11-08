@@ -4,5 +4,4 @@ UPDATE.+?SET
 INSERT\s+INTO.+?VALUES
 (SELECT|DELETE).+?FROM
 (CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|DATABASE)
-(and|or)\b.+?(><|=|\bin|\blike)
 sleep\s+[0-9]+
