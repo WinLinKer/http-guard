@@ -14,10 +14,9 @@ local O_APPEND = 0x0400;
 local S_IRUSR = 0x0100;
 local S_IWUSR = 0x0080;
 
-local Config = require("config")
-local Guard = {config = Config}
+local Guard = {config={}}
 
---从字典取出初化阶段产生的变量
+--从字典取出初始化阶段产生的变量
 Guard.config.whiteIPList = Dict:get("whiteIPList")
 Guard.config.blackIPList = Dict:get("blackIPList")
 Guard.config.whiteIPList = Dict:get("whiteIPList")
@@ -30,9 +29,49 @@ Guard.config.cookieRule = Dict:get("cookieRule")
 Guard.config.jsJumpRule = Dict:get("jsJumpRule")
 Guard.config.postWhiteRule = Dict:get("postWhiteRule")
 
+--从字典取出config.lua的变量
+Guard.config.autoDeny = Dict:get("autoDeny")
+Guard.config.dictName = Dict:get("dictName")
+Guard.config.dictExpiresTime = Dict:get("dictExpiresTime")
+Guard.config.attackTimes = Dict:get("attackTimes")
+Guard.config.denySeconds = Dict:get("denySeconds")
+Guard.config.fileExtensionProtect = Dict:get("fileExtensionProtect")
+Guard.config.errorReturn = Dict:get("errorReturn")
+Guard.config.realIPViaHeader = Dict:get("realIPViaHeader")
+Guard.config.clientIdentify = Dict:get("clientIdentify")
+Guard.config.ipWhiteModule = Dict:get("ipWhiteModule")
+Guard.config.ipWhiteListPath = Dict:get("ipWhiteListPath")
+Guard.config.ipBlackModule = Dict:get("ipBlackModule")
+Guard.config.ipBlackListPath = Dict:get("ipBlackListPath")
+Guard.config.logModule = Dict:get("logModule")
+Guard.config.logDebug = Dict:get("logDebug")
+Guard.config.logSavePath = Dict:get("logSavePath")
+Guard.config.getFilterModule = Dict:get("getFilterModule")
+Guard.config.getUrlPatternPath = Dict:get("getUrlPatternPath")
+Guard.config.postWhiteModule = Dict:get("postWhiteModule")
+Guard.config.postWhiteUrlPath = Dict:get("postWhiteUrlPath")
+Guard.config.postFilterModule = Dict:get("postFilterModule")
+Guard.config.uploadExtensionDeny = Dict:get("uploadExtensionDeny")
+Guard.config.fileExtension = Dict:get("fileExtension")
+Guard.config.postPatternPath = Dict:get("postPatternPath")
+Guard.config.cookieFilterModule = Dict:get("cookieFilterModule")
+Guard.config.cookiePatternPath = Dict:get("cookiePatternPath")
+Guard.config.ccAttackFilterModule = Dict:get("ccAttackFilterModule")
+Guard.config.urlVisitTimes = Dict:get("urlVisitTimes")
+Guard.config.CCBlackDicExpiresTime = Dict:get("CCBlackDicExpiresTime")
+Guard.config.jsJumpCodeSend = Dict:get("jsJumpCodeSend")
+Guard.config.jsVerifyWhiteTime = Dict:get("jsVerifyWhiteTime")
+Guard.config.jsJumpProtectUrlPath = Dict:get("jsJumpProtectUrlPath")
+Guard.config.clientIPDebug = Dict:get("clientIPDebug")
+Guard.config.guardMode = Dict:get("guardMode")
+Guard.config.randomKey = Dict:get("randomKey")
+Guard.config.setDictAllowIP = Dict:get("setDictAllowIP")
+
+
 --debug日志输出
 function Guard:debug(data)
 	if string.lower(self.config.logDebug) == "on" then
+		self.config.currentModule = (self.config.currentModule or "unkown module")
 		data = "["..self.config.currentModule.."]"..data
 		if self.config.clientIPDebug then
 			if self.config.realClientIP == self.config.clientIPDebug then
@@ -56,8 +95,14 @@ end
 --获取客户端真实ip
 function Guard:getRealClientIP()
 	if self.config.realIPViaHeader then
-		self:debug("realIPViaHeader is set.return "..self.config.reqHeader[self.config.realIPViaHeader])
-		return self.config.reqHeader[self.config.realIPViaHeader]
+		if self.config.reqHeader[self.config.realIPViaHeader] then
+			self:debug("realIPViaHeader is set.return "..self.config.reqHeader[self.config.realIPViaHeader])
+			return self.config.reqHeader[self.config.realIPViaHeader]
+		else
+			self:debug("reqHeader[realIPViaHeader] not found return ip "..self.config.ip)
+			return self.config.ip
+		end	
+		
 	else
 		self:debug("realIPViaHeader not set.return ip. "..self.config.ip)
 		return self.config.ip
@@ -211,7 +256,7 @@ function Guard:getFilter()
 			self:debug("  client "..self.config.realClientIP.." url"..self.config.url.." match rule "..self.config.getRule)
 			local data = table.concat({ngx.localtime(),"getFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent.."\n"},"|")
 			self:writeLog(data)
-			self:autoDeny(self.config.userIdentify,self.config.realClientIP)
+			self:autoDeny()
 			self:returnError()
 		else
 			self:debug("  client "..self.config.realClientIP.." url"..self.config.url.." not match rule "..self.config.getRule)
@@ -250,7 +295,7 @@ function Guard:postFilter()
 						self:debug(" body match "..self.config.fileExtension)
 						local data = table.concat({ngx.localtime(),"postUploadFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent.."\n"},"|")
 						self:writeLog(data)
-						self:autoDeny(self.config.userIdentify,self.config.realClientIP,self.config.dictExpiresTime)
+						self:autoDeny()
 						self:returnError()	
 					end
 				end
@@ -263,7 +308,7 @@ function Guard:postFilter()
 						self:debug(" body match rule "..self.config.postRule)
 						local data = table.concat({ngx.localtime(),"postContentFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent,body.."\n"},"|")
 						self:writeLog(data)
-						self:autoDeny(self.config.userIdentify,self.config.realClientIP,self.config.dictExpiresTime)
+						self:autoDeny()
 						self:returnError()
 					end
 				end
@@ -285,7 +330,7 @@ function Guard:cookieFilter()
 				self:debug(" cookie "..requestCookie.."match rule "..self.config.cookieRule)
 				local data = table.concat({ngx.localtime(),"cookieFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent,requestCookie.."\n"},"|")
 				self:writeLog(data)
-				self:autoDeny(self.config.userIdentify,self.config.realClientIP,self.config.dictExpiresTime)
+				self:autoDeny()
 				self:returnError()
 			end
 		end
@@ -320,58 +365,40 @@ function Guard:ccFilter()
 		if ngx.re.match(self.config.url, self.config.jsJumpRule, "isjo") then
 			self:debug(" url match rule "..self.config.jsJumpRule)
 			local jsCCIdentify = table.concat({self.config.realClientIP,"jscc"})
-			local dictJSValue, flags = self:dictGet(jsCCIdentify,"ccFilter:jsJumpCodeSend")
+			local jsvalid, _ = self:dictGet(jsCCIdentify,"ccFilter:jsJumpCodeSend")
 			local args = ngx.req.get_uri_args()
-			if dictJSValue then
-				self:debug(" found dictJSValue "..dictJSValue)
-				if not flags then
-					self:debug(" flags not found")
-					local urlccKeyValue = args["cckey"]
-					if urlccKeyValue and type(urlccKeyValue) == "table" then
-						urlccKeyValue=urlccKeyValue[table.getn(urlccKeyValue)]
-					end	
-					if urlccKeyValue and urlccKeyValue == tostring(dictJSValue) then
-						self:debug(" urlccKeyValue "..urlccKeyValue.." eq dictJSValue "..dictJSValue)
-						self:dictSet(jsCCIdentify, dictJSValue, self.config.jsVerifyWhiteTime, 1)
-					else
-						self:debug(" urlccKeyValue not eq dictJSValue "..dictJSValue)
-						if self:tlen(args) == 0 then
-							newUrl = table.concat({self.config.uri,"?cckey=",dictJSValue})
-						else
-							newUrl = table.concat({self.config.uri,"&cckey=",dictJSValue})
-						end	
-
-						local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"})
-						self:debug(" send jscode "..jsJumpCode)
-						ngx.header.content_type = "text/html"
-						ngx.print(jsJumpCode)
-						ngx.exit(200)
-					end	
+			if not jsvalid then
+				self:debug(" not in white list")
+				local urlccKeyValue = args["cckey"]
+				if urlccKeyValue and type(urlccKeyValue) == "table" then
+					urlccKeyValue=urlccKeyValue[table.getn(urlccKeyValue)]
 				end	
-			else
-				self:debug("  dictJSValue not found")
-				math.randomseed( os.time() );
-				local random = math.random(100000,999999)
-				self:dictSet(jsCCIdentify, random, 60)
-				if self:tlen(args) == 0 then
-					newUrl = table.concat({self.config.uri,"?cckey=",random})
+				if urlccKeyValue and self:verifyKey(urlccKeyValue) then
+					self:debug(" urlccKeyValue "..urlccKeyValue.." is valid ")
+					self:dictSet(jsCCIdentify, 1, self.config.jsVerifyWhiteTime)
 				else
-					newUrl = table.concat({self.config.uri,"&cckey=",random})
-				end	
+					self:debug(" urlccKeyValue invalid ")
+					jsRandomValue = self:makeRandomValue()
+					if self:tlen(args) == 0 then
+						newUrl = table.concat({self.config.uri,"?cckey=",jsRandomValue})
+					else
+						newUrl = table.concat({self.config.uri,"&cckey=",jsRandomValue})
+					end	
 
-				local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"})
-				self:debug(" send jscode "..jsJumpCode)
-				ngx.header.content_type = "text/html"
-				ngx.print(jsJumpCode)
-				ngx.exit(200)
+					local jsJumpCode=table.concat({"<script>window.location.href='",newUrl,"';</script>"})
+					self:debug(" send jscode "..jsJumpCode)
+					ngx.header.content_type = "text/html"
+					ngx.print(jsJumpCode)
+					ngx.exit(200)
+				end	
 			end	
 		end	
 	end
 end
 
---生成随机cookie值
-function Guard:makeRandomCookie()
-	local cookieKey = self.config.cookieKey
+--根据客户端ip以及启动时设置的随机数生成随机值
+function Guard:makeRandomValue()
+	local randomKey = self.config.randomKey
 	math.randomseed( os.time() )
 	local keyBefore = string.sub(ngx.md5(self.config.realClientIP),1,20)
 	local keyAfter = math.random(100000,999999)
@@ -384,24 +411,24 @@ function Guard:makeRandomCookie()
 	local keyAfter5 = string.sub(keyAfter,5,5)
 	local keyAfter6 = string.sub(keyAfter,6,6)
 	local keyMid = table.concat({
-				    string.sub(cookieKey,keyAfter1,keyAfter1),
-                    string.sub(cookieKey,keyAfter2,keyAfter2),
-                    string.sub(cookieKey,keyAfter3,keyAfter3),
-                    string.sub(cookieKey,keyAfter4,keyAfter4),
-                    string.sub(cookieKey,keyAfter5,keyAfter5),
-                    string.sub(cookieKey,keyAfter6,keyAfter6)
+				    string.sub(randomKey,keyAfter1,keyAfter1),
+                    string.sub(randomKey,keyAfter2,keyAfter2),
+                    string.sub(randomKey,keyAfter3,keyAfter3),
+                    string.sub(randomKey,keyAfter4,keyAfter4),
+                    string.sub(randomKey,keyAfter5,keyAfter5),
+                    string.sub(randomKey,keyAfter6,keyAfter6)
                    })
-	self:debug("make random cookie "..table.concat({keyBefore,keyMid,keyAfter}))				   	
+	self:debug("make random value "..table.concat({keyBefore,keyMid,keyAfter}))				   	
 	return table.concat({keyBefore,keyMid,keyAfter})
 
 end
 
 --验证cookie是否合法
-function Guard:verifyCookie()
-	local cookieKey = self.config.cookieKey
-	local keyBefore = string.sub(self.config.cookieValue,1,20)
-	local keyMid = string.sub(self.config.cookieValue,21,26)
-	local keyAfter = string.sub(self.config.cookieValue,27,32)
+function Guard:verifyKey(value)
+	local randomKey = self.config.randomKey
+	local keyBefore = string.sub(value,1,20)
+	local keyMid = string.sub(value,21,26)
+	local keyAfter = string.sub(value,27,32)
     local keyAfter1 = string.sub(keyAfter,1,1)
     local keyAfter2 = string.sub(keyAfter,2,2)
     local keyAfter3 = string.sub(keyAfter,3,3)
@@ -409,22 +436,18 @@ function Guard:verifyCookie()
     local keyAfter5 = string.sub(keyAfter,5,5)
     local keyAfter6 = string.sub(keyAfter,6,6)
     local keyMidConcat = table.concat({
-       					string.sub(cookieKey,keyAfter1,keyAfter1),
-                        string.sub(cookieKey,keyAfter2,keyAfter2),
-                        string.sub(cookieKey,keyAfter3,keyAfter3),
-                        string.sub(cookieKey,keyAfter4,keyAfter4),
-                        string.sub(cookieKey,keyAfter5,keyAfter5),
-                        string.sub(cookieKey,keyAfter6,keyAfter6)
+       					string.sub(randomKey,keyAfter1,keyAfter1),
+                        string.sub(randomKey,keyAfter2,keyAfter2),
+                        string.sub(randomKey,keyAfter3,keyAfter3),
+                        string.sub(randomKey,keyAfter4,keyAfter4),
+                        string.sub(randomKey,keyAfter5,keyAfter5),
+                        string.sub(randomKey,keyAfter6,keyAfter6)
                        })
 	local keyBeforeConcat = string.sub(ngx.md5(self.config.realClientIP),1,20)
 	if keyBefore == keyBeforeConcat and keyMid == keyMidConcat then
-		self:debug("cookie is valid,return "..self.config.cookieValue)
-		return self.config.cookieValue
+		return true
 	else
-		local randomCookie = self:makeRandomCookie(self.config.realClientIP)
-		ngx.header['Set-Cookie'] = table.concat({"guard=",randomCookie,"; path=/"})
-		self:debug("cookie invalid,send cookie and return realClientIP "..self.config.realClientIP)
-		return self.config.realClientIP
+		return false
 	end
 	
 end
@@ -436,13 +459,22 @@ function Guard:getUserIdentify()
 		--获取cookie的值
 		self.config.cookieValue = ngx.var["cookie_guard"]
 		if not self.config.cookieValue then
-			local randomCookie = self:makeRandomCookie(self.config.realClientIP)
+			local randomCookie = self:makeRandomValue()
 			ngx.header['Set-Cookie'] = table.concat({"guard=",randomCookie,"; path=/"})
 			self:debug("cookie not found.send cookie "..randomCookie.." and return realClientIP "..self.config.realClientIP)
 			return self.config.realClientIP
 		else
 			self:debug("cookie found. verifyCookie "..self.config.cookieValue)
-			return self:verifyCookie(self.config.cookieValue,self.config.realClientIP)
+			if self:verifyKey(self.config.cookieValue) then
+				self:debug(" cookie "..self.config.cookieValue.." is valid.return it.")
+				return self.config.cookieValue
+			else	
+				self:debug(" cookie "..self.config.cookieValue.." is invalid.return realip "..self.config.realClientIP)
+				local randomCookie = self:makeRandomValue()
+				ngx.header['Set-Cookie'] = table.concat({"guard=",randomCookie,"; path=/"})
+				self:debug("value invalid,send cookie and return realClientIP "..self.config.realClientIP)				
+				return self.config.realClientIP
+			end	
 		end
 	else
 		self:debug("clientIdentify is ip.")

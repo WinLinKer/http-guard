@@ -13,7 +13,6 @@ local function parseRuleFile(path,key)
 	end
 	list = string.gsub(list,"^%|",'')
 	Config[key] = list
-	Dict:set(key, list)
 	rfile:close()
 end
 
@@ -30,8 +29,7 @@ local function parseIPFile(path,key)
                 end
         end
         list = string.gsub(list,"^%|",'')
-	Config[key] = list  
-	Dict:set(key, list)
+		Config[key] = list  
         rfile:close()
 end
 
@@ -48,20 +46,24 @@ if string.match(Config.errorReturn,"^/") then
 	local rfile = assert(io.open(Config.errorReturn,"r"))
 	local errorHtmlStr = rfile:read("*all")
 	Config.errorHtmlStr = errorHtmlStr
-	Dict:set("errorHtmlStr", errorHtmlStr)
 	rfile:close()
 end
 
 --获取匹配需要保护扩展的正则
 Config.extensionProtectReg = "^/.*\\.("..Config.fileExtensionProtect..")$"
-Dict:set("extensionProtectReg", Config.extensionProtectReg)
 
 --生成一个随机数，用于加密cookie，防止伪造
-math.randomseed( os.time() )
-local cookieRandom = math.random(100000,999999)
-local cookieKey = ngx.md5(cookieRandom)
-Config.cookieKey = cookieKey
-Dict:set("cookieKey",cookieKey)
+if Config.guardMode == "single" then
+	math.randomseed( os.time() )
+	local Random = math.random(100000,999999)
+	local randomKey = ngx.md5(Random)
+	Config.randomKey = randomKey
+elseif Config.guardMode == "multiple" then
+	--do nothing
+else
+	ngx.log(ngx.ERR,"Guard mode "..Config.guardMode.." is invalid")
+end	
+
 
 --解析get过滤规则配置文件
 if string.lower(Config.getFilterModule) == "on" then
@@ -91,4 +93,9 @@ end
 if string.lower(Config.postWhiteModule) == "on" then
 	parseRuleFile(Config.postWhiteUrlPath,"postWhiteRule")
 	if string.match(Config.postWhiteRule, "^ *$") then ngx.log(ngx.ERR,Config.postWhiteUrlPath," can not be empty.") end
+end	
+
+--变量存放到字典
+for k, v in pairs(Config) do
+	Dict:set(k, v)
 end	

@@ -8,6 +8,17 @@ autoDeny = "Off",
 --设置字典名称，一般不需要修改。
 dictName = "guard_dict",
 
+--可选值为single,multiple
+--如果有多台nginx在前端并列防攻击，需要设置guardMode的值为multiple，因为需要保持多台nginx生成的key可以在任意一台验证.
+guardMode = "single",
+
+--设置用于生成随机cookie或者随机js跳转代码的key
+--key至少为10位(包括数字和字母)，务必要修改此值，要不可能防御失效.
+randomKey = "UYS65ws8KQ",
+
+--设置允许访问管理配置变量的接口的ip，值为正则表达式
+setDictAllowIP = "^127.0.0.1$",
+
 --设置字典过期时间,单位为秒
 --此设置是对开启自动防攻击功能时用来存储攻击次数（attackTimes）的过期时间。
 --仅当autoDeny = "On"时有效,对cc攻击过滤模块无效.
@@ -88,7 +99,6 @@ postWhiteUrlPath = "/data/waf/post_white_url",
 
 -------------POST过滤模块设置--------------
 --POST模块总开关，可选为On(开启),Off(关闭)
---此开关为off后，下面的uploadExtensionDeny开关会不起作用。
 postFilterModule = "On",
 
 --过滤特定扩展名上传的开关，可选为On(开启),Off(关闭)
