@@ -14,6 +14,7 @@ local O_APPEND = 0x0400;
 local S_IRUSR = 0x0100;
 local S_IWUSR = 0x0080;
 
+local Conf = require ("config")
 local Guard = {config={}}
 
 --从字典取出初始化阶段产生的变量
@@ -30,43 +31,9 @@ Guard.config.jsJumpRule = Dict:get("jsJumpRule")
 Guard.config.postWhiteRule = Dict:get("postWhiteRule")
 
 --从字典取出config.lua的变量
-Guard.config.autoDeny = Dict:get("autoDeny")
-Guard.config.dictName = Dict:get("dictName")
-Guard.config.dictExpiresTime = Dict:get("dictExpiresTime")
-Guard.config.attackTimes = Dict:get("attackTimes")
-Guard.config.denySeconds = Dict:get("denySeconds")
-Guard.config.fileExtensionProtect = Dict:get("fileExtensionProtect")
-Guard.config.errorReturn = Dict:get("errorReturn")
-Guard.config.realIPViaHeader = Dict:get("realIPViaHeader")
-Guard.config.clientIdentify = Dict:get("clientIdentify")
-Guard.config.ipWhiteModule = Dict:get("ipWhiteModule")
-Guard.config.ipWhiteListPath = Dict:get("ipWhiteListPath")
-Guard.config.ipBlackModule = Dict:get("ipBlackModule")
-Guard.config.ipBlackListPath = Dict:get("ipBlackListPath")
-Guard.config.logModule = Dict:get("logModule")
-Guard.config.logDebug = Dict:get("logDebug")
-Guard.config.logSavePath = Dict:get("logSavePath")
-Guard.config.getFilterModule = Dict:get("getFilterModule")
-Guard.config.getUrlPatternPath = Dict:get("getUrlPatternPath")
-Guard.config.postWhiteModule = Dict:get("postWhiteModule")
-Guard.config.postWhiteUrlPath = Dict:get("postWhiteUrlPath")
-Guard.config.postFilterModule = Dict:get("postFilterModule")
-Guard.config.uploadExtensionDeny = Dict:get("uploadExtensionDeny")
-Guard.config.fileExtension = Dict:get("fileExtension")
-Guard.config.postPatternPath = Dict:get("postPatternPath")
-Guard.config.cookieFilterModule = Dict:get("cookieFilterModule")
-Guard.config.cookiePatternPath = Dict:get("cookiePatternPath")
-Guard.config.ccAttackFilterModule = Dict:get("ccAttackFilterModule")
-Guard.config.urlVisitTimes = Dict:get("urlVisitTimes")
-Guard.config.CCBlackDicExpiresTime = Dict:get("CCBlackDicExpiresTime")
-Guard.config.jsJumpCodeSend = Dict:get("jsJumpCodeSend")
-Guard.config.jsVerifyWhiteTime = Dict:get("jsVerifyWhiteTime")
-Guard.config.jsJumpProtectUrlPath = Dict:get("jsJumpProtectUrlPath")
-Guard.config.clientIPDebug = Dict:get("clientIPDebug")
-Guard.config.guardMode = Dict:get("guardMode")
-Guard.config.randomKey = Dict:get("randomKey")
-Guard.config.setDictAllowIP = Dict:get("setDictAllowIP")
-
+for k in pairs(Conf) do
+	Guard.config[k] = Dict:get(k)
+end	
 
 --debug日志输出
 function Guard:debug(data)
