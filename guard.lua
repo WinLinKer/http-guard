@@ -14,26 +14,29 @@ local O_APPEND = 0x0400;
 local S_IRUSR = 0x0100;
 local S_IWUSR = 0x0080;
 
-local Conf = require ("config")
 local Guard = {config={}}
 
---从字典取出初始化阶段产生的变量
-Guard.config.whiteIPList = Dict:get("whiteIPList")
-Guard.config.blackIPList = Dict:get("blackIPList")
-Guard.config.whiteIPList = Dict:get("whiteIPList")
-Guard.config.errorHtmlStr = Dict:get("errorHtmlStr")
-Guard.config.extensionProtectReg = Dict:get("extensionProtectReg")
-Guard.config.cookieKey = Dict:get("cookieKey")
-Guard.config.getRule = Dict:get("getRule")
-Guard.config.postRule = Dict:get("postRule")
-Guard.config.cookieRule = Dict:get("cookieRule")
-Guard.config.jsJumpRule = Dict:get("jsJumpRule")
-Guard.config.postWhiteRule = Dict:get("postWhiteRule")
+--载入配置
+function Guard:loadConfig()
+	--从字典取出初始化阶段产生的变量
+	self.config.whiteIPList = Dict:get("whiteIPList")
+	self.config.blackIPList = Dict:get("blackIPList")
+	self.config.whiteIPList = Dict:get("whiteIPList")
+	self.config.errorHtmlStr = Dict:get("errorHtmlStr")
+	self.config.extensionProtectReg = Dict:get("extensionProtectReg")
+	self.config.cookieKey = Dict:get("cookieKey")
+	self.config.getRule = Dict:get("getRule")
+	self.config.postRule = Dict:get("postRule")
+	self.config.cookieRule = Dict:get("cookieRule")
+	self.config.jsJumpRule = Dict:get("jsJumpRule")
+	self.config.postWhiteRule = Dict:get("postWhiteRule")
 
---从字典取出config.lua的变量
-for k in pairs(Conf) do
-	Guard.config[k] = Dict:get(k)
-end	
+	--从字典取出config.lua的变量
+	local Conf = require ("config")
+	for k in pairs(Conf) do
+		self.config[k] = Dict:get(k)
+	end
+end
 
 --debug日志输出
 function Guard:debug(data)
@@ -201,7 +204,7 @@ function Guard:autoDeny()
 		local filterIdentify = table.concat({self.config.userIdentify,"filter"})
 		local v, _ = self:dictGet(filterIdentify,autoDeny)
 		if v then
-			if v > self.config.attackTimes then
+			if tonumber(v) > tonumber(self.config.attackTimes) then
 				self:debug(" client "..self.config.realClientIP.."attack "..self.config.attackTimes.." exceed "..v.." times.deny "..self.config.denySeconds.." seconds")
 				self:dictSet(self.config.realClientIP,1,self.config.denySeconds)
 				self:returnError()
@@ -313,7 +316,7 @@ function Guard:ccFilter()
 		local ccTimes = self:dictGet(ccIdentify,"ccFilter")
 		if ccTimes then
 			local newCCTimes = self:dictIncr(ccIdentify, 1,"ccFilter")
-			if newCCTimes > self.config.urlVisitTimes then
+			if tonumber(newCCTimes) > tonumber(self.config.urlVisitTimes) then
 				self:debug(" client "..self.config.realClientIP.." visit times "..newCCTimes.." exceed "..self.config.urlVisitTimes)
 				self:dictSet(self.config.realClientIP, 1, self.config.CCBlackDicExpiresTime)
 				local data = table.concat({ngx.localtime(),"ccFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent.."\n"},"|")

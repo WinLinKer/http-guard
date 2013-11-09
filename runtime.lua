@@ -1,7 +1,12 @@
 local Guard = require("guard")
+local Conf = require ("config")
 Guard.config.filename = ngx.var.request_filename
+Guard.config.logDebug = Dict:get("logDebug")
+Guard.config.extensionProtectReg = Dict:get("extensionProtectReg")
 --只对指定的扩展文件作保护
 if Guard:isFileExtensionProtect() then
+	--载入变量
+	Guard:loadConfig()	
 	--定义变量
 	Guard.config.reqMethod = ngx.var.request_method
 	Guard.config.reqHeader = ngx.req.get_headers()
