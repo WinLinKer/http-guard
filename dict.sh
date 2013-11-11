@@ -2,6 +2,10 @@
 ips="192.168.0.1 192.168.0.2 192.168.0.3"
 action=$1
 
+urlencode(){
+echo $1 | tr -d '\n' | xxd -plain | sed 's/\(..\)/%\1/g' | tr -d '\n'
+}
+
 if [ "$action" == "" ]; then
 	echo "action not found"
 	exit 1
@@ -24,6 +28,7 @@ elif [ "$action" == "set" ];then
 	if [ $# -eq 3 ];then
 		key=$2
 		value=$3
+		value=$(urlencode $value)
 		for ip in $ips
 		do
 			result=$(curl "${ip}/dict/?action=${action}&key=$key&value=$value")
@@ -32,6 +37,7 @@ elif [ "$action" == "set" ];then
 	elif [ $# -eq 4 ];then
 		key=$2
 		value=$3
+		value=$(urlencode $value)
 		exp=$4
 		for ip in $ips
 		do
