@@ -121,6 +121,14 @@ cookieFilterModule = "Off",
 --每行一条规则,每条规则为一条正则表达式，这些规则用来匹配cookie的值
 cookiePatternPath = "/data/waf/cookie_pattern_rule",
 
+-----------User Agent过滤设置--------------
+--useragent过滤开关。可选为On(开启),Off(关闭)
+useragentFilterModule = "Off",
+
+--useragent过滤规则文件
+--每行一条规则,每条规则为一条正则表达式，这些规则用来匹配useragent的值
+useragentPatternPath = "/data/waf/useragent_pattern_rule",
+
 -------------------CC攻击过滤设置----------------
 
 --cc攻击过滤模块开关。可选为On(开启),Off(关闭)

@@ -83,6 +83,12 @@ if string.lower(Config.cookieFilterModule) == "on" then
 	if string.match(Config.cookieRule, "^ *$") then ngx.log(ngx.ERR,Config.cookiePatternPath," can not be empty.") end
 end
 
+--解析useragent过滤规则配置文件
+if string.lower(Config.useragentFilterModule) == "on" then
+        parseRuleFile(Config.useragentPatternPath,"useragentRule")
+	if string.match(Config.useragentRule, "^ *$") then ngx.log(ngx.ERR,Config.useragentPatternPath," can not be empty.") end
+end
+
 --解析需要通过js跳转防cc的url规则配置文件
 if string.lower(Config.jsJumpCodeSend) == "on" then
         parseRuleFile(Config.jsJumpProtectUrlPath,"jsJumpRule")

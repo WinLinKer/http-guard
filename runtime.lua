@@ -41,6 +41,9 @@ if Guard:isFileExtensionProtect() then
 
  	--cookie过滤
  	Guard:cookieFilter()
+ 
+  	--user_agent过滤
+ 	Guard:useragentFilter()
 
  	--cc攻击过滤
  	Guard:ccFilter()

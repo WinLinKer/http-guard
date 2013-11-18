@@ -30,6 +30,8 @@ function Guard:loadConfig()
 	self.config.cookieRule = Dict:get("cookieRule")
 	self.config.jsJumpRule = Dict:get("jsJumpRule")
 	self.config.postWhiteRule = Dict:get("postWhiteRule")
+	self.config.useragentRule = Dict:get("useragentRule")
+	
 
 	--从字典取出config.lua的变量
 	local Conf = require ("config")
@@ -299,6 +301,24 @@ function Guard:cookieFilter()
 			if ngx.re.match(requestCookie,self.config.cookieRule,"isjo") then 
 				self:debug(" cookie "..requestCookie.."match rule "..self.config.cookieRule)
 				local data = table.concat({ngx.localtime(),"cookieFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent,requestCookie.."\n"},"|")
+				self:writeLog(data)
+				self:autoDeny()
+				self:returnError()
+			end
+		end
+	end
+end
+
+--User Agent 过滤
+function Guard:useragentFilter()
+	if string.lower(self.config.useragentFilterModule) == "on" then
+		self:setCurrentModule("useragentFilter")
+		self:debug(" modules is enable.")
+		if not (self.config.userAgent == "-") then
+			local requestUserAgent = ngx.unescape_uri(self.config.userAgent)
+			if ngx.re.match(requestUserAgent,self.config.useragentRule,"isjo") then 
+				self:debug(" user_agent "..requestUserAgent.."match rule "..self.config.useragentRule)
+				local data = table.concat({ngx.localtime(),"useragentFilterModule",self.config.realClientIP,self.config.url,self.config.ref,self.config.userAgent.."\n"},"|")
 				self:writeLog(data)
 				self:autoDeny()
 				self:returnError()
